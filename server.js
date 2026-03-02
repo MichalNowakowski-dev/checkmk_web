@@ -542,6 +542,24 @@ const HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
+
+const basicAuth = (req, res) => {
+  const auth = req.headers["authorization"];
+  if (auth && auth.startsWith("Basic ")) {
+    const decoded = Buffer.from(auth.slice(6), "base64").toString();
+    const [user, pass] = decoded.split(":");
+    if (user === ADMIN_USER && pass === ADMIN_PASS) return true;
+  }
+  res.writeHead(401, {
+    "WWW-Authenticate": 'Basic realm="CheckMK Manager"',
+    "Content-Type": "text/plain",
+  });
+  res.end("Unauthorized");
+  return false;
+};
+
 const send = (res, status, data) => {
   const body = typeof data === "string" ? data : JSON.stringify(data);
   const ct =
@@ -570,8 +588,11 @@ const server = http.createServer(async (req, res) => {
   const { method, url } = req;
 
   if (method === "OPTIONS") return send(res, 200, "OK");
-  if (method === "GET" && url === "/") return send(res, 200, HTML);
   if (method === "GET" && url === "/health") return send(res, 200, "OK");
+
+  if (!basicAuth(req, res)) return;
+
+  if (method === "GET" && url === "/") return send(res, 200, HTML);
 
   // ---- EXCEPTIONS ----
   if (method === "GET" && url === "/api/exceptions") {
