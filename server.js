@@ -271,7 +271,7 @@ const HTML = `<!DOCTYPE html>
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Host</th><th>Service</th><th>Summary</th><th>Age</th><th>Typ</th><th></th>
+          <th>ID</th><th>Host</th><th>Service</th><th>Notes</th><th>Typ</th><th></th>
         </tr>
       </thead>
       <tbody id="exc-tbody">
@@ -292,13 +292,9 @@ const HTML = `<!DOCTYPE html>
         <label>Service</label>
         <input type="text" id="exc-service" placeholder="np. filesystem" />
       </div>
-      <div class="field">
-        <label>Summary</label>
-        <input type="text" id="exc-summary" placeholder="opcjonalnie" />
-      </div>
-      <div class="field">
-        <label>Age</label>
-        <input type="text" id="exc-age" placeholder="opcjonalnie" />
+      <div class="field full">
+        <label>Notes</label>
+        <input type="text" id="exc-notes" placeholder="opcjonalnie" />
       </div>
     </div>
     <div class="actions">
@@ -389,7 +385,7 @@ const HTML = `<!DOCTYPE html>
   function excRender() {
     const tbody = document.getElementById('exc-tbody');
     if (!excRows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">Brak rekord\u00f3w</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Brak rekord\u00f3w</td></tr>';
       return;
     }
     tbody.innerHTML = excRows.map(r => {
@@ -398,8 +394,7 @@ const HTML = `<!DOCTYPE html>
         + '<td>' + r.id + '</td>'
         + '<td>' + (r.host || '<span class="empty">\u2014</span>') + '</td>'
         + '<td>' + (r.service || '<span class="empty">\u2014</span>') + '</td>'
-        + '<td>' + (r.summary || '<span class="empty">\u2014</span>') + '</td>'
-        + '<td>' + (r.age || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
         + '<td><span class="badge badge-' + cls + '">' + label + '</span></td>'
         + '<td><button class="btn-del" onclick="excDel(event,' + r.id + ')">usu\u0144</button></td>'
         + '</tr>';
@@ -414,8 +409,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = id;
     document.getElementById('exc-host').value = r.host || '';
     document.getElementById('exc-service').value = r.service || '';
-    document.getElementById('exc-summary').value = r.summary || '';
-    document.getElementById('exc-age').value = r.age || '';
+    document.getElementById('exc-notes').value = r.notes || '';
     document.getElementById('exc-form-title').textContent = '\u270e Edycja wyj\u0105tku #' + id;
   }
 
@@ -423,8 +417,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = '';
     document.getElementById('exc-host').value = '';
     document.getElementById('exc-service').value = '';
-    document.getElementById('exc-summary').value = '';
-    document.getElementById('exc-age').value = '';
+    document.getElementById('exc-notes').value = '';
     document.getElementById('exc-form-title').textContent = '+ Nowy wyj\u0105tek';
     document.querySelectorAll('#exc-tbody tr').forEach(r => r.classList.remove('selected'));
     setStatus('exc-status', '', '');
@@ -435,8 +428,7 @@ const HTML = `<!DOCTYPE html>
     const body = {
       host: document.getElementById('exc-host').value.trim(),
       service: document.getElementById('exc-service').value.trim(),
-      summary: document.getElementById('exc-summary').value.trim(),
-      age: document.getElementById('exc-age').value.trim(),
+      notes: document.getElementById('exc-notes').value.trim(),
     };
     const url = id ? '/api/exceptions/' + id : '/api/exceptions';
     const method = id ? 'PUT' : 'POST';
@@ -588,20 +580,20 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url === "/api/exceptions") {
-    const { host, service, summary, age } = await parseBody(req);
+    const { host, service, notes } = await parseBody(req);
     await pool.query(
-      "INSERT INTO exceptions (host, service, summary, age) VALUES ($1,$2,$3,$4)",
-      [host || "", service || "", summary || "", age || ""],
+      "INSERT INTO exceptions (host, service, notes) VALUES ($1,$2,$3)",
+      [host || "", service || "", notes || ""],
     );
     return send(res, 201, { ok: true });
   }
 
   const excPut = url.match(/^\/api\/exceptions\/(\d+)$/);
   if (method === "PUT" && excPut) {
-    const { host, service, summary, age } = await parseBody(req);
+    const { host, service, notes } = await parseBody(req);
     await pool.query(
-      "UPDATE exceptions SET host=$1, service=$2, summary=$3, age=$4 WHERE id=$5",
-      [host || "", service || "", summary || "", age || "", excPut[1]],
+      "UPDATE exceptions SET host=$1, service=$2, notes=$3 WHERE id=$4",
+      [host || "", service || "", notes || "", excPut[1]],
     );
     return send(res, 200, { ok: true });
   }
