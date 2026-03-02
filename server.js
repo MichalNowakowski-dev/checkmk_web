@@ -16,7 +16,7 @@ const HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exceptions Manager</title>
+<title>CheckMK Manager</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap');
 
@@ -28,6 +28,7 @@ const HTML = `<!DOCTYPE html>
     --border: #1e1e2e;
     --accent: #e8ff47;
     --accent2: #47ffe8;
+    --accent3: #ff47e8;
     --text: #d4d4e8;
     --muted: #5a5a7a;
     --danger: #ff4757;
@@ -46,7 +47,7 @@ const HTML = `<!DOCTYPE html>
     display: flex;
     align-items: baseline;
     gap: 16px;
-    margin-bottom: 48px;
+    margin-bottom: 32px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 24px;
   }
@@ -59,26 +60,45 @@ const HTML = `<!DOCTYPE html>
     letter-spacing: -0.04em;
   }
 
-  header span {
-    color: var(--muted);
-    font-size: 0.75rem;
+  header span { color: var(--muted); font-size: 0.75rem; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
   }
+
+  .tab {
+    padding: 10px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab.active-rules { color: var(--accent3); border-bottom-color: var(--accent3); }
+
+  .pane { display: none; }
+  .pane.active { display: block; }
 
   /* TABLE */
-  .table-wrap {
-    overflow-x: auto;
-    margin-bottom: 48px;
-  }
+  .table-wrap { overflow-x: auto; margin-bottom: 48px; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.82rem;
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 
-  thead tr {
-    border-bottom: 1px solid var(--accent);
-  }
+  thead tr { border-bottom: 1px solid var(--accent); }
+  thead.rules-head tr { border-bottom-color: var(--accent3); }
 
   th {
     text-align: left;
@@ -90,6 +110,8 @@ const HTML = `<!DOCTYPE html>
     font-size: 0.7rem;
   }
 
+  .rules-head th { color: var(--accent3); }
+
   tbody tr {
     border-bottom: 1px solid var(--border);
     transition: background 0.15s;
@@ -99,11 +121,7 @@ const HTML = `<!DOCTYPE html>
   tbody tr:hover { background: #16161f; }
   tbody tr.selected { background: #1a1a28; outline: 1px solid var(--accent2); }
 
-  td {
-    padding: 12px 16px;
-    color: var(--text);
-  }
-
+  td { padding: 12px 16px; color: var(--text); }
   td.empty { color: var(--muted); font-style: italic; }
 
   .badge {
@@ -117,6 +135,8 @@ const HTML = `<!DOCTYPE html>
   .badge-host { background: #e8ff4720; color: var(--accent); }
   .badge-service { background: #47ffe820; color: var(--accent2); }
   .badge-both { background: #ff47e820; color: #ff47e8; }
+  .badge-yes { background: #47ff8a20; color: var(--success); }
+  .badge-no { background: #ffffff10; color: var(--muted); }
 
   .btn-del {
     background: none;
@@ -149,6 +169,8 @@ const HTML = `<!DOCTYPE html>
     letter-spacing: 0.02em;
   }
 
+  .form-title.rules { color: var(--accent3); }
+
   .fields {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -156,12 +178,7 @@ const HTML = `<!DOCTYPE html>
     margin-bottom: 24px;
   }
 
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
+  .field { display: flex; flex-direction: column; gap: 6px; }
   .field.full { grid-column: 1 / -1; }
 
   label {
@@ -171,7 +188,7 @@ const HTML = `<!DOCTYPE html>
     letter-spacing: 0.1em;
   }
 
-  input {
+  input[type="text"], input[type="number"] {
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
@@ -181,16 +198,27 @@ const HTML = `<!DOCTYPE html>
     border-radius: 2px;
     outline: none;
     transition: border-color 0.15s;
+    width: 100%;
   }
 
   input:focus { border-color: var(--accent2); }
   input::placeholder { color: var(--muted); }
 
-  .actions {
+  .checkbox-wrap {
     display: flex;
-    gap: 12px;
     align-items: center;
+    gap: 10px;
+    padding: 10px 0;
   }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent3);
+    cursor: pointer;
+  }
+
+  .actions { display: flex; gap: 12px; align-items: center; }
 
   .btn {
     padding: 10px 24px;
@@ -206,6 +234,8 @@ const HTML = `<!DOCTYPE html>
 
   .btn-primary { background: var(--accent); color: #0a0a0f; }
   .btn-primary:hover { background: #fff; }
+  .btn-primary-rules { background: var(--accent3); color: #0a0a0f; }
+  .btn-primary-rules:hover { background: #fff; }
 
   .btn-secondary {
     background: none;
@@ -214,171 +244,308 @@ const HTML = `<!DOCTYPE html>
   }
   .btn-secondary:hover { border-color: var(--text); color: var(--text); }
 
-  #status {
+  .status-msg {
     font-size: 0.75rem;
     padding: 4px 0;
     min-height: 20px;
-    transition: opacity 0.3s;
   }
   .ok { color: var(--success); }
   .err { color: var(--danger); }
-
-  #edit-id { display: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>exceptions</h1>
+  <h1>checkmk</h1>
   <span>manager</span>
 </header>
 
-<div class="table-wrap">
-  <table id="tbl">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Host</th>
-        <th>Service</th>
-        <th>Summary</th>
-        <th>Age</th>
-        <th>Typ</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="tbody">
-      <tr><td colspan="7" class="empty">Ładowanie...</td></tr>
-    </tbody>
-  </table>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('exceptions', this)">Wyjątki</button>
+  <button class="tab" onclick="switchTab('rules', this)">Reguły alertów</button>
 </div>
 
-<div class="form-section">
-  <div class="form-title" id="form-title">+ Nowy wyjątek</div>
-  <input type="hidden" id="edit-id">
-  <div class="fields">
-    <div class="field">
-      <label>Host</label>
-      <input id="f-host" placeholder="np. dev, test" />
+<!-- ==================== TAB: EXCEPTIONS ==================== -->
+<div class="pane active" id="pane-exceptions">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>Host</th><th>Service</th><th>Summary</th><th>Age</th><th>Typ</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="exc-tbody">
+        <tr><td colspan="7" class="empty">Ładowanie...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="form-section">
+    <div class="form-title" id="exc-form-title">+ Nowy wyjątek</div>
+    <input type="hidden" id="exc-edit-id">
+    <div class="fields">
+      <div class="field">
+        <label>Host</label>
+        <input type="text" id="exc-host" placeholder="np. dev, test" />
+      </div>
+      <div class="field">
+        <label>Service</label>
+        <input type="text" id="exc-service" placeholder="np. filesystem" />
+      </div>
+      <div class="field">
+        <label>Summary</label>
+        <input type="text" id="exc-summary" placeholder="opcjonalnie" />
+      </div>
+      <div class="field">
+        <label>Age</label>
+        <input type="text" id="exc-age" placeholder="opcjonalnie" />
+      </div>
     </div>
-    <div class="field">
-      <label>Service</label>
-      <input id="f-service" placeholder="np. filesystem" />
-    </div>
-    <div class="field">
-      <label>Summary</label>
-      <input id="f-summary" placeholder="opcjonalnie" />
-    </div>
-    <div class="field">
-      <label>Age</label>
-      <input id="f-age" placeholder="opcjonalnie" />
+    <div class="actions">
+      <button class="btn btn-primary" onclick="excSave()">Zapisz</button>
+      <button class="btn btn-secondary" onclick="excReset()">Anuluj</button>
+      <span class="status-msg" id="exc-status"></span>
     </div>
   </div>
-  <div class="actions">
-    <button class="btn btn-primary" onclick="save()">Zapisz</button>
-    <button class="btn btn-secondary" onclick="reset()">Anuluj</button>
-    <span id="status"></span>
+</div>
+
+<!-- ==================== TAB: ALERT RULES ==================== -->
+<div class="pane" id="pane-rules">
+  <div class="table-wrap">
+    <table>
+      <thead class="rules-head">
+        <tr>
+          <th>ID</th><th>Service pattern</th><th>Min downtime</th><th>Max downtime</th><th>Send info</th><th>Notes</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rules-tbody">
+        <tr><td colspan="7" class="empty">Ładowanie...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="form-section">
+    <div class="form-title rules" id="rules-form-title">+ Nowa reguła</div>
+    <input type="hidden" id="rules-edit-id">
+    <div class="fields">
+      <div class="field full">
+        <label>Service pattern</label>
+        <input type="text" id="r-pattern" placeholder="np. Filesystem, Memory" />
+      </div>
+      <div class="field">
+        <label>Min downtime (min)</label>
+        <input type="number" id="r-min" placeholder="np. 5" min="0" />
+      </div>
+      <div class="field">
+        <label>Max downtime (min, 0 = brak)</label>
+        <input type="number" id="r-max" placeholder="0 = brak limitu" min="0" />
+      </div>
+      <div class="field">
+        <label>Send info</label>
+        <div class="checkbox-wrap">
+          <input type="checkbox" id="r-send-info" />
+          <span style="font-size:0.8rem; color:var(--muted)">dołącz CONFIG.info do alertu</span>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Notes</label>
+        <input type="text" id="r-notes" placeholder="opcjonalnie" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary-rules" onclick="rulesSave()">Zapisz</button>
+      <button class="btn btn-secondary" onclick="rulesReset()">Anuluj</button>
+      <span class="status-msg" id="rules-status"></span>
+    </div>
   </div>
 </div>
 
 <script>
-  let rows = [];
+  // ---- TABS ----
+  function switchTab(name, btn) {
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.remove('active-rules'); });
+    document.getElementById('pane-' + name).classList.add('active');
+    if (name === 'rules') btn.classList.add('active-rules');
+    else btn.classList.add('active');
+  }
 
-  async function load() {
+  // ---- EXCEPTIONS ----
+  let excRows = [];
+
+  async function excLoad() {
     const res = await fetch('/api/exceptions');
-    rows = await res.json();
-    render();
+    excRows = await res.json();
+    excRender();
   }
 
   function getType(r) {
     if (r.host && r.service) return ['both', 'host + service'];
     if (r.host) return ['host', 'tylko host'];
     if (r.service) return ['service', 'tylko service'];
-    return ['', '–'];
+    return ['', '\u2013'];
   }
 
-  function render() {
-    const tbody = document.getElementById('tbody');
-    if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">Brak rekordów</td></tr>';
+  function excRender() {
+    const tbody = document.getElementById('exc-tbody');
+    if (!excRows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Brak rekord\u00f3w</td></tr>';
       return;
     }
-    tbody.innerHTML = rows.map(r => {
+    tbody.innerHTML = excRows.map(r => {
       const [cls, label] = getType(r);
-      return \`<tr onclick="edit(\${r.id})" id="row-\${r.id}">
-        <td>\${r.id}</td>
-        <td>\${r.host || '<span class="empty">—</span>'}</td>
-        <td>\${r.service || '<span class="empty">—</span>'}</td>
-        <td>\${r.summary || '<span class="empty">—</span>'}</td>
-        <td>\${r.age || '<span class="empty">—</span>'}</td>
-        <td><span class="badge badge-\${cls}">\${label}</span></td>
-        <td><button class="btn-del" onclick="del(event,\${r.id})">usuń</button></td>
-      </tr>\`;
+      return '<tr onclick="excEdit(' + r.id + ')" id="exc-row-' + r.id + '">'
+        + '<td>' + r.id + '</td>'
+        + '<td>' + (r.host || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.service || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.summary || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.age || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td><span class="badge badge-' + cls + '">' + label + '</span></td>'
+        + '<td><button class="btn-del" onclick="excDel(event,' + r.id + ')">usu\u0144</button></td>'
+        + '</tr>';
     }).join('');
   }
 
-  function edit(id) {
-    document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
-    const r = rows.find(x => x.id === id);
+  function excEdit(id) {
+    document.querySelectorAll('#exc-tbody tr').forEach(r => r.classList.remove('selected'));
+    const r = excRows.find(x => x.id === id);
     if (!r) return;
-    document.getElementById('row-' + id).classList.add('selected');
-    document.getElementById('edit-id').value = id;
-    document.getElementById('f-host').value = r.host || '';
-    document.getElementById('f-service').value = r.service || '';
-    document.getElementById('f-summary').value = r.summary || '';
-    document.getElementById('f-age').value = r.age || '';
-    document.getElementById('form-title').textContent = '✎ Edycja rekordu #' + id;
+    document.getElementById('exc-row-' + id).classList.add('selected');
+    document.getElementById('exc-edit-id').value = id;
+    document.getElementById('exc-host').value = r.host || '';
+    document.getElementById('exc-service').value = r.service || '';
+    document.getElementById('exc-summary').value = r.summary || '';
+    document.getElementById('exc-age').value = r.age || '';
+    document.getElementById('exc-form-title').textContent = '\u270e Edycja wyj\u0105tku #' + id;
   }
 
-  function reset() {
-    document.getElementById('edit-id').value = '';
-    document.getElementById('f-host').value = '';
-    document.getElementById('f-service').value = '';
-    document.getElementById('f-summary').value = '';
-    document.getElementById('f-age').value = '';
-    document.getElementById('form-title').textContent = '+ Nowy wyjątek';
-    document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
-    status('', '');
+  function excReset() {
+    document.getElementById('exc-edit-id').value = '';
+    document.getElementById('exc-host').value = '';
+    document.getElementById('exc-service').value = '';
+    document.getElementById('exc-summary').value = '';
+    document.getElementById('exc-age').value = '';
+    document.getElementById('exc-form-title').textContent = '+ Nowy wyj\u0105tek';
+    document.querySelectorAll('#exc-tbody tr').forEach(r => r.classList.remove('selected'));
+    setStatus('exc-status', '', '');
   }
 
-  function status(msg, type) {
-    const el = document.getElementById('status');
-    el.textContent = msg;
-    el.className = type;
-  }
-
-  async function save() {
-    const id = document.getElementById('edit-id').value;
+  async function excSave() {
+    const id = document.getElementById('exc-edit-id').value;
     const body = {
-      host: document.getElementById('f-host').value.trim(),
-      service: document.getElementById('f-service').value.trim(),
-      summary: document.getElementById('f-summary').value.trim(),
-      age: document.getElementById('f-age').value.trim(),
+      host: document.getElementById('exc-host').value.trim(),
+      service: document.getElementById('exc-service').value.trim(),
+      summary: document.getElementById('exc-summary').value.trim(),
+      age: document.getElementById('exc-age').value.trim(),
     };
     const url = id ? '/api/exceptions/' + id : '/api/exceptions';
     const method = id ? 'PUT' : 'POST';
     try {
       const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
       if (!res.ok) throw new Error();
-      status(id ? 'Zaktualizowano ✓' : 'Dodano ✓', 'ok');
-      reset();
-      load();
-    } catch {
-      status('Błąd zapisu', 'err');
-    }
+      setStatus('exc-status', id ? 'Zaktualizowano \u2713' : 'Dodano \u2713', 'ok');
+      excReset();
+      excLoad();
+    } catch { setStatus('exc-status', 'B\u0142\u0105d zapisu', 'err'); }
   }
 
-  async function del(e, id) {
+  async function excDel(e, id) {
     e.stopPropagation();
-    if (!confirm('Usunąć rekord #' + id + '?')) return;
-    try {
-      await fetch('/api/exceptions/' + id, { method: 'DELETE' });
-      load();
-    } catch {
-      status('Błąd usuwania', 'err');
-    }
+    if (!confirm('Usun\u0105\u0107 wyj\u0105tek #' + id + '?')) return;
+    await fetch('/api/exceptions/' + id, { method: 'DELETE' });
+    excLoad();
   }
 
-  load();
+  // ---- ALERT RULES ----
+  let rulesRows = [];
+
+  async function rulesLoad() {
+    const res = await fetch('/api/rules');
+    rulesRows = await res.json();
+    rulesRender();
+  }
+
+  function rulesRender() {
+    const tbody = document.getElementById('rules-tbody');
+    if (!rulesRows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Brak rekord\u00f3w</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rulesRows.map(r =>
+      '<tr onclick="rulesEdit(' + r.id + ')" id="rules-row-' + r.id + '">'
+      + '<td>' + r.id + '</td>'
+      + '<td>' + r.service_pattern + '</td>'
+      + '<td>' + r.min_downtime + ' min</td>'
+      + '<td>' + (r.max_downtime ? r.max_downtime + ' min' : '<span class="empty">brak</span>') + '</td>'
+      + '<td><span class="badge ' + (r.send_info ? 'badge-yes' : 'badge-no') + '">' + (r.send_info ? 'TAK' : 'NIE') + '</span></td>'
+      + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
+      + '<td><button class="btn-del" onclick="rulesDel(event,' + r.id + ')">usu\u0144</button></td>'
+      + '</tr>'
+    ).join('');
+  }
+
+  function rulesEdit(id) {
+    document.querySelectorAll('#rules-tbody tr').forEach(r => r.classList.remove('selected'));
+    const r = rulesRows.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('rules-row-' + id).classList.add('selected');
+    document.getElementById('rules-edit-id').value = id;
+    document.getElementById('r-pattern').value = r.service_pattern || '';
+    document.getElementById('r-min').value = r.min_downtime != null ? r.min_downtime : 5;
+    document.getElementById('r-max').value = r.max_downtime != null ? r.max_downtime : 0;
+    document.getElementById('r-send-info').checked = !!r.send_info;
+    document.getElementById('r-notes').value = r.notes || '';
+    document.getElementById('rules-form-title').textContent = '\u270e Edycja regu\u0142y #' + id;
+  }
+
+  function rulesReset() {
+    document.getElementById('rules-edit-id').value = '';
+    document.getElementById('r-pattern').value = '';
+    document.getElementById('r-min').value = '';
+    document.getElementById('r-max').value = '';
+    document.getElementById('r-send-info').checked = false;
+    document.getElementById('r-notes').value = '';
+    document.getElementById('rules-form-title').textContent = '+ Nowa regu\u0142a';
+    document.querySelectorAll('#rules-tbody tr').forEach(r => r.classList.remove('selected'));
+    setStatus('rules-status', '', '');
+  }
+
+  async function rulesSave() {
+    const id = document.getElementById('rules-edit-id').value;
+    const body = {
+      service_pattern: document.getElementById('r-pattern').value.trim(),
+      min_downtime: parseInt(document.getElementById('r-min').value) || 0,
+      max_downtime: parseInt(document.getElementById('r-max').value) || 0,
+      send_info: document.getElementById('r-send-info').checked,
+      notes: document.getElementById('r-notes').value.trim(),
+    };
+    if (!body.service_pattern) return setStatus('rules-status', 'Service pattern wymagany', 'err');
+    const url = id ? '/api/rules/' + id : '/api/rules';
+    const method = id ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error();
+      setStatus('rules-status', id ? 'Zaktualizowano \u2713' : 'Dodano \u2713', 'ok');
+      rulesReset();
+      rulesLoad();
+    } catch { setStatus('rules-status', 'B\u0142\u0105d zapisu', 'err'); }
+  }
+
+  async function rulesDel(e, id) {
+    e.stopPropagation();
+    if (!confirm('Usun\u0105\u0107 regu\u0142\u0119 #' + id + '?')) return;
+    await fetch('/api/rules/' + id, { method: 'DELETE' });
+    rulesLoad();
+  }
+
+  function setStatus(elId, msg, type) {
+    const el = document.getElementById(elId);
+    el.textContent = msg;
+    el.className = 'status-msg ' + type;
+  }
+
+  excLoad();
+  rulesLoad();
 </script>
 </body>
 </html>`;
@@ -410,16 +577,16 @@ const parseBody = (req) =>
 const server = http.createServer(async (req, res) => {
   const { method, url } = req;
 
-  // Serve UI
+  if (method === "OPTIONS") return send(res, 200, "OK");
   if (method === "GET" && url === "/") return send(res, 200, HTML);
+  if (method === "GET" && url === "/health") return send(res, 200, "OK");
 
-  // GET /api/exceptions
+  // ---- EXCEPTIONS ----
   if (method === "GET" && url === "/api/exceptions") {
     const result = await pool.query("SELECT * FROM exceptions ORDER BY id");
     return send(res, 200, result.rows);
   }
 
-  // POST /api/exceptions
   if (method === "POST" && url === "/api/exceptions") {
     const { host, service, summary, age } = await parseBody(req);
     await pool.query(
@@ -429,22 +596,65 @@ const server = http.createServer(async (req, res) => {
     return send(res, 201, { ok: true });
   }
 
-  // PUT /api/exceptions/:id
-  const putMatch = url.match(/^\/api\/exceptions\/(\d+)$/);
-  if (method === "PUT" && putMatch) {
-    const id = putMatch[1];
+  const excPut = url.match(/^\/api\/exceptions\/(\d+)$/);
+  if (method === "PUT" && excPut) {
     const { host, service, summary, age } = await parseBody(req);
     await pool.query(
       "UPDATE exceptions SET host=$1, service=$2, summary=$3, age=$4 WHERE id=$5",
-      [host || "", service || "", summary || "", age || "", id],
+      [host || "", service || "", summary || "", age || "", excPut[1]],
     );
     return send(res, 200, { ok: true });
   }
 
-  // DELETE /api/exceptions/:id
-  const delMatch = url.match(/^\/api\/exceptions\/(\d+)$/);
-  if (method === "DELETE" && delMatch) {
-    await pool.query("DELETE FROM exceptions WHERE id=$1", [delMatch[1]]);
+  const excDel = url.match(/^\/api\/exceptions\/(\d+)$/);
+  if (method === "DELETE" && excDel) {
+    await pool.query("DELETE FROM exceptions WHERE id=$1", [excDel[1]]);
+    return send(res, 200, { ok: true });
+  }
+
+  // ---- ALERT RULES ----
+  if (method === "GET" && url === "/api/rules") {
+    const result = await pool.query("SELECT * FROM alert_rules ORDER BY id");
+    return send(res, 200, result.rows);
+  }
+
+  if (method === "POST" && url === "/api/rules") {
+    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
+      await parseBody(req);
+    await pool.query(
+      "INSERT INTO alert_rules (service_pattern, min_downtime, max_downtime, send_info, notes) VALUES ($1,$2,$3,$4,$5)",
+      [
+        service_pattern,
+        min_downtime || 0,
+        max_downtime || 0,
+        !!send_info,
+        notes || "",
+      ],
+    );
+    return send(res, 201, { ok: true });
+  }
+
+  const rulesPut = url.match(/^\/api\/rules\/(\d+)$/);
+  if (method === "PUT" && rulesPut) {
+    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
+      await parseBody(req);
+    await pool.query(
+      "UPDATE alert_rules SET service_pattern=$1, min_downtime=$2, max_downtime=$3, send_info=$4, notes=$5 WHERE id=$6",
+      [
+        service_pattern,
+        min_downtime || 0,
+        max_downtime || 0,
+        !!send_info,
+        notes || "",
+        rulesPut[1],
+      ],
+    );
+    return send(res, 200, { ok: true });
+  }
+
+  const rulesDel = url.match(/^\/api\/rules\/(\d+)$/);
+  if (method === "DELETE" && rulesDel) {
+    await pool.query("DELETE FROM alert_rules WHERE id=$1", [rulesDel[1]]);
     return send(res, 200, { ok: true });
   }
 
