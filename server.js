@@ -603,19 +603,20 @@ const HTML = `<!DOCTYPE html>
   let logsInterval = null;
 
   function logsColorize(text) {
-    return text
-      .split('\n')
-      .map(line => {
-        if (/error|err|fail|exception/i.test(line)) return '<span class="log-err">' + escHtml(line) + '</span>';
-        if (/warn|warning/i.test(line)) return '<span class="log-warn">' + escHtml(line) + '</span>';
-        if (/\u2713|success|started|listening/i.test(line)) return '<span class="log-ok">' + escHtml(line) + '</span>';
-        return escHtml(line);
-      })
-      .join('\n');
+    var lines = text.split("\n");
+    var result = [];
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i];
+      if (/error|err|fail|exception/i.test(l)) result.push('<span class="log-err">' + escHtml(l) + '</span>');
+      else if (/warn|warning/i.test(l)) result.push('<span class="log-warn">' + escHtml(l) + '</span>');
+      else if (/success|started|listening/i.test(l)) result.push('<span class="log-ok">' + escHtml(l) + '</span>');
+      else result.push(escHtml(l));
+    }
+    return result.join("\n");
   }
 
   function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   async function logsLoad() {
