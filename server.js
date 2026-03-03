@@ -1,6 +1,8 @@
 require("dotenv").config();
 const http = require("http");
 const { Pool } = require("pg");
+const { exec } = require("child_process");
+const PM2_SERVICE = process.env.PM2_SERVICE || "checkmk_watcher";
 
 const pool = new Pool({
   // uzupełnij dane połączenia
@@ -251,6 +253,49 @@ const HTML = `<!DOCTYPE html>
   }
   .ok { color: var(--success); }
   .err { color: var(--danger); }
+
+  /* LOGS */
+  .log-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+  }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .log-toolbar .form-title { margin-bottom: 0; }
+
+  .log-auto {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  #log-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 600px;
+    overflow-y: auto;
+    color: #a0a0c0;
+  }
+
+  #log-box .log-err { color: var(--danger); }
+  #log-box .log-ok { color: var(--success); }
+  #log-box .log-warn { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -263,6 +308,7 @@ const HTML = `<!DOCTYPE html>
 <div class="tabs">
   <button class="tab active" onclick="switchTab('exceptions', this)">Wyjątki</button>
   <button class="tab" onclick="switchTab('rules', this)">Reguły alertów</button>
+  <button class="tab" onclick="switchTab('logs', this)">Logi</button>
 </div>
 
 <!-- ==================== TAB: EXCEPTIONS ==================== -->
@@ -356,6 +402,27 @@ const HTML = `<!DOCTYPE html>
   </div>
 </div>
 
+
+<!-- ==================== TAB: LOGS ==================== -->
+<div class="pane" id="pane-logs">
+  <div class="log-wrap">
+    <div class="log-toolbar">
+      <div class="form-title" style="color:var(--accent2)">Logi PM2</div>
+      <div class="log-auto">
+        <input type="checkbox" id="log-auto" checked style="accent-color:var(--accent2)" />
+        <label for="log-auto" style="text-transform:none;letter-spacing:0">auto-odświeżaj co 5s</label>
+      </div>
+      <button class="btn btn-secondary" style="padding:6px 16px;font-size:0.75rem" onclick="logsLoad()">Odśwież</button>
+      <select id="log-lines" onchange="logsLoad()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:inherit;font-size:0.75rem;border-radius:2px;outline:none">
+        <option value="50">50 linii</option>
+        <option value="100">100 linii</option>
+        <option value="200">200 linii</option>
+      </select>
+    </div>
+    <div id="log-box">Ładowanie...</div>
+  </div>
+</div>
+
 <script>
   // ---- TABS ----
   function switchTab(name, btn) {
@@ -363,6 +430,7 @@ const HTML = `<!DOCTYPE html>
     document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.remove('active-rules'); });
     document.getElementById('pane-' + name).classList.add('active');
     if (name === 'rules') btn.classList.add('active-rules');
+    else if (name === 'logs') { btn.classList.add('active-rules'); logsLoad(); }
     else btn.classList.add('active');
   }
 
@@ -530,6 +598,45 @@ const HTML = `<!DOCTYPE html>
     rulesLoad();
   }
 
+
+  // ---- LOGS ----
+  let logsInterval = null;
+
+  function logsColorize(text) {
+    return text
+      .split('\n')
+      .map(line => {
+        if (/error|err|fail|exception/i.test(line)) return '<span class="log-err">' + escHtml(line) + '</span>';
+        if (/warn|warning/i.test(line)) return '<span class="log-warn">' + escHtml(line) + '</span>';
+        if (/\u2713|success|started|listening/i.test(line)) return '<span class="log-ok">' + escHtml(line) + '</span>';
+        return escHtml(line);
+      })
+      .join('\n');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function logsLoad() {
+    const lines = document.getElementById('log-lines').value;
+    try {
+      const res = await fetch('/api/logs?lines=' + lines);
+      const data = await res.json();
+      const box = document.getElementById('log-box');
+      box.innerHTML = logsColorize(data.output || '');
+      box.scrollTop = box.scrollHeight;
+    } catch { document.getElementById('log-box').textContent = 'Błąd pobierania logów'; }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('log-auto').addEventListener('change', function() {
+      if (this.checked) logsInterval = setInterval(logsLoad, 5000);
+      else { clearInterval(logsInterval); logsInterval = null; }
+    });
+    logsInterval = setInterval(logsLoad, 5000);
+  });
+
   function setStatus(elId, msg, type) {
     const el = document.getElementById(elId);
     el.textContent = msg;
@@ -669,6 +776,20 @@ const server = http.createServer(async (req, res) => {
   if (method === "DELETE" && rulesDel) {
     await pool.query("DELETE FROM alert_rules WHERE id=$1", [rulesDel[1]]);
     return send(res, 200, { ok: true });
+  }
+
+  // ---- LOGS ----
+  if (method === "GET" && url.startsWith("/api/logs")) {
+    const params = new URL("http://x" + url).searchParams;
+    const lines = parseInt(params.get("lines")) || 50;
+    exec(
+      `pm2 logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
+      (err, stdout, stderr) => {
+        const output = (stdout || "") + (stderr || "");
+        send(res, 200, { output });
+      },
+    );
+    return;
   }
 
   send(res, 404, { error: "Not found" });
