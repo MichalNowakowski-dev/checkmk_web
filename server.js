@@ -786,10 +786,9 @@ const server = http.createServer(async (req, res) => {
     exec(
       `pm2 logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
       (err, stdout, stderr) => {
-        const output = ((stdout || "") + (stderr || "")).replace(
-          /\x1B\[[0-9;]*m/g,
-          "",
-        );
+        const output = ((stdout || "") + (stderr || ""))
+          .replace(/\x1B\[[0-9;]*m/g, "") // usuń kody ANSI
+          .replace(/^\d+\|[^|]*\|\s*/gm, ""); // usuń prefix PM2
         send(res, 200, { output });
       },
     );
