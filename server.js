@@ -603,7 +603,7 @@ const HTML = `<!DOCTYPE html>
   let logsInterval = null;
 
   function logsColorize(text) {
-    var lines = text.split("\n");
+    var lines = text.split("\\n");
     var result = [];
     for (var i = 0; i < lines.length; i++) {
       var l = lines[i];
@@ -612,7 +612,7 @@ const HTML = `<!DOCTYPE html>
       else if (/success|started|listening/i.test(l)) result.push('<span class="log-ok">' + escHtml(l) + '</span>');
       else result.push(escHtml(l));
     }
-    return result.join("\n");
+    return result.join("\\n");
   }
 
   function escHtml(s) {
