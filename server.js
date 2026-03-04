@@ -709,20 +709,20 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url === "/api/exceptions") {
-    const { host, service, info } = await parseBody(req);
+    const { host, service, notes } = await parseBody(req);
     await pool.query(
-      "INSERT INTO exceptions (host, service, info) VALUES ($1,$2,$3)",
-      [host || "", service || "", info || ""],
+      "INSERT INTO exceptions (host, service, notes) VALUES ($1,$2,$3)",
+      [host || "", service || "", notes || ""],
     );
     return send(res, 201, { ok: true });
   }
 
   const excPut = url.match(/^\/api\/exceptions\/(\d+)$/);
   if (method === "PUT" && excPut) {
-    const { host, service, info } = await parseBody(req);
+    const { host, service, notes } = await parseBody(req);
     await pool.query(
-      "UPDATE exceptions SET host=$1, service=$2, info=$3 WHERE id=$4",
-      [host || "", service || "", info || "", excPut[1]],
+      "UPDATE exceptions SET host=$1, service=$2, notes=$3 WHERE id=$4",
+      [host || "", service || "", notes || "", excPut[1]],
     );
     return send(res, 200, { ok: true });
   }
