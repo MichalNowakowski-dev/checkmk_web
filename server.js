@@ -317,7 +317,7 @@ const HTML = `<!DOCTYPE html>
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Host</th><th>Service</th><th>Notes</th><th>Typ</th><th></th>
+          <th>ID</th><th>Host</th><th>Service</th><th>info</th><th>Typ</th><th></th>
         </tr>
       </thead>
       <tbody id="exc-tbody">
@@ -339,8 +339,8 @@ const HTML = `<!DOCTYPE html>
         <input type="text" id="exc-service" placeholder="np. filesystem" />
       </div>
       <div class="field full">
-        <label>Notes</label>
-        <input type="text" id="exc-notes" placeholder="opcjonalnie" />
+        <label>info</label>
+        <input type="text" id="exc-info" placeholder="opcjonalnie" />
       </div>
     </div>
     <div class="actions">
@@ -357,7 +357,7 @@ const HTML = `<!DOCTYPE html>
     <table>
       <thead class="rules-head">
         <tr>
-          <th>ID</th><th>Service pattern</th><th>Min downtime</th><th>Max downtime</th><th>Send info</th><th>Notes</th><th></th>
+          <th>ID</th><th>Service pattern</th><th>Min downtime</th><th>Max downtime</th><th>Send info</th><th>Message</th><th></th>
         </tr>
       </thead>
       <tbody id="rules-tbody">
@@ -386,12 +386,12 @@ const HTML = `<!DOCTYPE html>
         <label>Send info</label>
         <div class="checkbox-wrap">
           <input type="checkbox" id="r-send-info" />
-          <span style="font-size:0.8rem; color:var(--muted)">dołącz CONFIG.info do alertu</span>
+          <span style="font-size:0.8rem; color:var(--muted)">Dodaj info do alertu</span>
         </div>
       </div>
       <div class="field full">
-        <label>Notes</label>
-        <input type="text" id="r-notes" placeholder="opcjonalnie" />
+        <label>info</label>
+        <input type="text" id="r-info" placeholder="opcjonalnie" />
       </div>
     </div>
     <div class="actions">
@@ -462,7 +462,7 @@ const HTML = `<!DOCTYPE html>
         + '<td>' + r.id + '</td>'
         + '<td>' + (r.host || '<span class="empty">\u2014</span>') + '</td>'
         + '<td>' + (r.service || '<span class="empty">\u2014</span>') + '</td>'
-        + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.info || '<span class="empty">\u2014</span>') + '</td>'
         + '<td><span class="badge badge-' + cls + '">' + label + '</span></td>'
         + '<td><button class="btn-del" onclick="excDel(event,' + r.id + ')">usu\u0144</button></td>'
         + '</tr>';
@@ -477,7 +477,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = id;
     document.getElementById('exc-host').value = r.host || '';
     document.getElementById('exc-service').value = r.service || '';
-    document.getElementById('exc-notes').value = r.notes || '';
+    document.getElementById('exc-info').value = r.info || '';
     document.getElementById('exc-form-title').textContent = '\u270e Edycja wyj\u0105tku #' + id;
   }
 
@@ -485,7 +485,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = '';
     document.getElementById('exc-host').value = '';
     document.getElementById('exc-service').value = '';
-    document.getElementById('exc-notes').value = '';
+    document.getElementById('exc-info').value = '';
     document.getElementById('exc-form-title').textContent = '+ Nowy wyj\u0105tek';
     document.querySelectorAll('#exc-tbody tr').forEach(r => r.classList.remove('selected'));
     setStatus('exc-status', '', '');
@@ -496,7 +496,7 @@ const HTML = `<!DOCTYPE html>
     const body = {
       host: document.getElementById('exc-host').value.trim(),
       service: document.getElementById('exc-service').value.trim(),
-      notes: document.getElementById('exc-notes').value.trim(),
+      info: document.getElementById('exc-info').value.trim(),
     };
     const url = id ? '/api/exceptions/' + id : '/api/exceptions';
     const method = id ? 'PUT' : 'POST';
@@ -538,7 +538,7 @@ const HTML = `<!DOCTYPE html>
       + '<td>' + r.min_downtime + ' min</td>'
       + '<td>' + (r.max_downtime ? r.max_downtime + ' min' : '<span class="empty">brak</span>') + '</td>'
       + '<td><span class="badge ' + (r.send_info ? 'badge-yes' : 'badge-no') + '">' + (r.send_info ? 'TAK' : 'NIE') + '</span></td>'
-      + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
+      + '<td>' + (r.info || '<span class="empty">\u2014</span>') + '</td>'
       + '<td><button class="btn-del" onclick="rulesDel(event,' + r.id + ')">usu\u0144</button></td>'
       + '</tr>'
     ).join('');
@@ -554,7 +554,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('r-min').value = r.min_downtime != null ? r.min_downtime : 5;
     document.getElementById('r-max').value = r.max_downtime != null ? r.max_downtime : 0;
     document.getElementById('r-send-info').checked = !!r.send_info;
-    document.getElementById('r-notes').value = r.notes || '';
+    document.getElementById('r-info').value = r.info || '';
     document.getElementById('rules-form-title').textContent = '\u270e Edycja regu\u0142y #' + id;
   }
 
@@ -564,7 +564,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('r-min').value = '';
     document.getElementById('r-max').value = '';
     document.getElementById('r-send-info').checked = false;
-    document.getElementById('r-notes').value = '';
+    document.getElementById('r-info').value = '';
     document.getElementById('rules-form-title').textContent = '+ Nowa regu\u0142a';
     document.querySelectorAll('#rules-tbody tr').forEach(r => r.classList.remove('selected'));
     setStatus('rules-status', '', '');
@@ -577,7 +577,7 @@ const HTML = `<!DOCTYPE html>
       min_downtime: parseInt(document.getElementById('r-min').value) || 0,
       max_downtime: parseInt(document.getElementById('r-max').value) || 0,
       send_info: document.getElementById('r-send-info').checked,
-      notes: document.getElementById('r-notes').value.trim(),
+      info: document.getElementById('r-info').value.trim(),
     };
     if (!body.service_pattern) return setStatus('rules-status', 'Service pattern wymagany', 'err');
     const url = id ? '/api/rules/' + id : '/api/rules';
@@ -709,20 +709,20 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url === "/api/exceptions") {
-    const { host, service, notes } = await parseBody(req);
+    const { host, service, info } = await parseBody(req);
     await pool.query(
-      "INSERT INTO exceptions (host, service, notes) VALUES ($1,$2,$3)",
-      [host || "", service || "", notes || ""],
+      "INSERT INTO exceptions (host, service, info) VALUES ($1,$2,$3)",
+      [host || "", service || "", info || ""],
     );
     return send(res, 201, { ok: true });
   }
 
   const excPut = url.match(/^\/api\/exceptions\/(\d+)$/);
   if (method === "PUT" && excPut) {
-    const { host, service, notes } = await parseBody(req);
+    const { host, service, info } = await parseBody(req);
     await pool.query(
-      "UPDATE exceptions SET host=$1, service=$2, notes=$3 WHERE id=$4",
-      [host || "", service || "", notes || "", excPut[1]],
+      "UPDATE exceptions SET host=$1, service=$2, info=$3 WHERE id=$4",
+      [host || "", service || "", info || "", excPut[1]],
     );
     return send(res, 200, { ok: true });
   }
@@ -740,16 +740,16 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url === "/api/rules") {
-    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
+    const { service_pattern, min_downtime, max_downtime, send_info, info } =
       await parseBody(req);
     await pool.query(
-      "INSERT INTO alert_rules (service_pattern, min_downtime, max_downtime, send_info, notes) VALUES ($1,$2,$3,$4,$5)",
+      "INSERT INTO alert_rules (service_pattern, min_downtime, max_downtime, send_info, info) VALUES ($1,$2,$3,$4,$5)",
       [
         service_pattern,
         min_downtime || 0,
         max_downtime || 0,
         !!send_info,
-        notes || "",
+        info || "",
       ],
     );
     return send(res, 201, { ok: true });
@@ -757,16 +757,16 @@ const server = http.createServer(async (req, res) => {
 
   const rulesPut = url.match(/^\/api\/rules\/(\d+)$/);
   if (method === "PUT" && rulesPut) {
-    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
+    const { service_pattern, min_downtime, max_downtime, send_info, info } =
       await parseBody(req);
     await pool.query(
-      "UPDATE alert_rules SET service_pattern=$1, min_downtime=$2, max_downtime=$3, send_info=$4, notes=$5 WHERE id=$6",
+      "UPDATE alert_rules SET service_pattern=$1, min_downtime=$2, max_downtime=$3, send_info=$4, info=$5 WHERE id=$6",
       [
         service_pattern,
         min_downtime || 0,
         max_downtime || 0,
         !!send_info,
-        notes || "",
+        info || "",
         rulesPut[1],
       ],
     );
