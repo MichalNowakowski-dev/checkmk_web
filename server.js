@@ -317,7 +317,7 @@ const HTML = `<!DOCTYPE html>
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Host</th><th>Service</th><th>info</th><th>Typ</th><th></th>
+          <th>ID</th><th>Host</th><th>Service</th><th>Notes</th><th>Typ</th><th></th>
         </tr>
       </thead>
       <tbody id="exc-tbody">
@@ -339,8 +339,8 @@ const HTML = `<!DOCTYPE html>
         <input type="text" id="exc-service" placeholder="np. filesystem" />
       </div>
       <div class="field full">
-        <label>info</label>
-        <input type="text" id="exc-info" placeholder="opcjonalnie" />
+        <label>Notes</label>
+        <input type="text" id="exc-notes" placeholder="opcjonalnie" />
       </div>
     </div>
     <div class="actions">
@@ -462,7 +462,7 @@ const HTML = `<!DOCTYPE html>
         + '<td>' + r.id + '</td>'
         + '<td>' + (r.host || '<span class="empty">\u2014</span>') + '</td>'
         + '<td>' + (r.service || '<span class="empty">\u2014</span>') + '</td>'
-        + '<td>' + (r.info || '<span class="empty">\u2014</span>') + '</td>'
+        + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
         + '<td><span class="badge badge-' + cls + '">' + label + '</span></td>'
         + '<td><button class="btn-del" onclick="excDel(event,' + r.id + ')">usu\u0144</button></td>'
         + '</tr>';
@@ -477,7 +477,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = id;
     document.getElementById('exc-host').value = r.host || '';
     document.getElementById('exc-service').value = r.service || '';
-    document.getElementById('exc-info').value = r.info || '';
+    document.getElementById('exc-notes').value = r.notes || '';
     document.getElementById('exc-form-title').textContent = '\u270e Edycja wyj\u0105tku #' + id;
   }
 
@@ -485,7 +485,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('exc-edit-id').value = '';
     document.getElementById('exc-host').value = '';
     document.getElementById('exc-service').value = '';
-    document.getElementById('exc-info').value = '';
+    document.getElementById('exc-notes').value = '';
     document.getElementById('exc-form-title').textContent = '+ Nowy wyj\u0105tek';
     document.querySelectorAll('#exc-tbody tr').forEach(r => r.classList.remove('selected'));
     setStatus('exc-status', '', '');
@@ -496,7 +496,7 @@ const HTML = `<!DOCTYPE html>
     const body = {
       host: document.getElementById('exc-host').value.trim(),
       service: document.getElementById('exc-service').value.trim(),
-      info: document.getElementById('exc-info').value.trim(),
+      notes: document.getElementById('exc-notes').value.trim(),
     };
     const url = id ? '/api/exceptions/' + id : '/api/exceptions';
     const method = id ? 'PUT' : 'POST';
