@@ -410,18 +410,25 @@ const HTML = `<!DOCTYPE html>
   <div class="log-wrap">
     <div class="log-toolbar">
       <div class="form-title" style="color:var(--accent2)">Logi PM2</div>
+      <div id="watcher-status" style="display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:2px">
+        <span id="status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block;transition:background 0.3s"></span>
+        <span id="status-label" style="font-size:0.75rem;color:var(--muted)">...</span>
+      </div>
+      <button class="btn" id="btn-start" style="padding:6px 14px;font-size:0.75rem;background:var(--success);color:#0a0a0f;border:none" onclick="watcherAction('start')">Start</button>
+      <button class="btn" id="btn-restart" style="padding:6px 14px;font-size:0.75rem;background:var(--accent);color:#0a0a0f;border:none" onclick="watcherAction('restart')">Restart</button>
+      <button class="btn" id="btn-stop" style="padding:6px 14px;font-size:0.75rem;background:var(--danger);color:#fff;border:none" onclick="watcherAction('stop')">Stop</button>
+      <span id="watcher-action-status" style="font-size:0.75rem;min-width:80px"></span>
       <div class="log-auto">
         <input type="checkbox" id="log-auto" checked style="accent-color:var(--accent2)" />
         <label for="log-auto" style="text-transform:none;letter-spacing:0">auto-odświeżaj co 5s</label>
       </div>
-      <button class="btn btn-secondary" style="padding:6px 16px;font-size:0.75rem" onclick="logsLoad()">Odśwież</button>
-      <button class="btn" id="restart-btn" style="padding:6px 16px;font-size:0.75rem;background:var(--danger);color:#fff;border:none" onclick="restartWatcher()">Restart watchera</button>
-      <span id="restart-status" style="font-size:0.75rem;min-width:100px"></span>
+      <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.75rem" onclick="logsLoad()">Odśwież</button>
       <select id="log-lines" onchange="logsLoad()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:inherit;font-size:0.75rem;border-radius:2px;outline:none">
         <option value="50">50 linii</option>
         <option value="100">100 linii</option>
         <option value="200">200 linii</option>
       </select>
+    </div>
     </div>
     <div id="log-box">Ładowanie...</div>
   </div>
@@ -434,7 +441,7 @@ const HTML = `<!DOCTYPE html>
     document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.remove('active-rules'); });
     document.getElementById('pane-' + name).classList.add('active');
     if (name === 'rules') btn.classList.add('active-rules');
-    else if (name === 'logs') { btn.classList.add('active-rules'); logsLoad(); }
+    else if (name === 'logs') { btn.classList.add('active-rules'); logsLoad(); watcherStatus(); }
     else btn.classList.add('active');
   }
 
