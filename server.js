@@ -34,7 +34,6 @@ const HTML = `<!DOCTYPE html>
     --text: #d4d4e8;
     --muted: #5a5a7a;
     --danger: #ff4757;
-    --info: #1e90ff;
     --success: #47ff8a;
   }
 
@@ -295,7 +294,6 @@ const HTML = `<!DOCTYPE html>
   }
 
   #log-box .log-err { color: var(--danger); }
-  #log-box .log-info { color: var(--info); }
   #log-box .log-ok { color: var(--success); }
   #log-box .log-warn { color: var(--accent); }
 </style>
@@ -610,7 +608,6 @@ const HTML = `<!DOCTYPE html>
     for (var i = 0; i < lines.length; i++) {
       var l = lines[i];
       if (/error|err|fail|exception/i.test(l)) result.push('<span class="log-err">' + escHtml(l) + '</span>');
-      else if (/Sprawdzenie/i.test(l)) result.push('<span class="log-info">' + escHtml(l) + '</span>');
       else if (/warn|warning/i.test(l)) result.push('<span class="log-warn">' + escHtml(l) + '</span>');
       else if (/success|started|listening/i.test(l)) result.push('<span class="log-ok">' + escHtml(l) + '</span>');
       else result.push(escHtml(l));
