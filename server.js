@@ -34,7 +34,6 @@ const HTML = `<!DOCTYPE html>
     --text: #d4d4e8;
     --muted: #5a5a7a;
     --danger: #ff4757;
-    --info: #1e90ff;
     --success: #47ff8a;
   }
 
@@ -295,7 +294,6 @@ const HTML = `<!DOCTYPE html>
   }
 
   #log-box .log-err { color: var(--danger); }
-  #log-box .log-info { color: var(--info); }
   #log-box .log-ok { color: var(--success); }
   #log-box .log-warn { color: var(--accent); }
 </style>
@@ -359,7 +357,7 @@ const HTML = `<!DOCTYPE html>
     <table>
       <thead class="rules-head">
         <tr>
-          <th>ID</th><th>Service pattern</th><th>Min downtime</th><th>Max downtime</th><th>Send info</th><th>Message</th><th></th>
+          <th>ID</th><th>Service pattern</th><th>Min downtime</th><th>Max downtime</th><th>Send info</th><th>Notes</th><th></th>
         </tr>
       </thead>
       <tbody id="rules-tbody">
@@ -388,12 +386,12 @@ const HTML = `<!DOCTYPE html>
         <label>Send info</label>
         <div class="checkbox-wrap">
           <input type="checkbox" id="r-send-info" />
-          <span style="font-size:0.8rem; color:var(--muted)">Dodaj info do alertu</span>
+          <span style="font-size:0.8rem; color:var(--muted)">dołącz CONFIG.info do alertu</span>
         </div>
       </div>
       <div class="field full">
-        <label>info</label>
-        <input type="text" id="r-info" placeholder="opcjonalnie" />
+        <label>Notes</label>
+        <input type="text" id="r-notes" placeholder="opcjonalnie" />
       </div>
     </div>
     <div class="actions">
@@ -415,6 +413,8 @@ const HTML = `<!DOCTYPE html>
         <label for="log-auto" style="text-transform:none;letter-spacing:0">auto-odświeżaj co 5s</label>
       </div>
       <button class="btn btn-secondary" style="padding:6px 16px;font-size:0.75rem" onclick="logsLoad()">Odśwież</button>
+      <button class="btn" id="restart-btn" style="padding:6px 16px;font-size:0.75rem;background:var(--danger);color:#fff;border:none" onclick="restartWatcher()">Restart watchera</button>
+      <span id="restart-status" style="font-size:0.75rem;min-width:100px"></span>
       <select id="log-lines" onchange="logsLoad()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:inherit;font-size:0.75rem;border-radius:2px;outline:none">
         <option value="50">50 linii</option>
         <option value="100">100 linii</option>
@@ -432,7 +432,7 @@ const HTML = `<!DOCTYPE html>
     document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.remove('active-rules'); });
     document.getElementById('pane-' + name).classList.add('active');
     if (name === 'rules') btn.classList.add('active-rules');
-    else if (name === 'logs') { btn.classList.add('active-rules'); logsLoad(); }
+    else if (name === 'logs') { btn.classList.add('active-rules'); logsLoad(); watcherStatus(); }
     else btn.classList.add('active');
   }
 
@@ -540,7 +540,7 @@ const HTML = `<!DOCTYPE html>
       + '<td>' + r.min_downtime + ' min</td>'
       + '<td>' + (r.max_downtime ? r.max_downtime + ' min' : '<span class="empty">brak</span>') + '</td>'
       + '<td><span class="badge ' + (r.send_info ? 'badge-yes' : 'badge-no') + '">' + (r.send_info ? 'TAK' : 'NIE') + '</span></td>'
-      + '<td>' + (r.info || '<span class="empty">\u2014</span>') + '</td>'
+      + '<td>' + (r.notes || '<span class="empty">\u2014</span>') + '</td>'
       + '<td><button class="btn-del" onclick="rulesDel(event,' + r.id + ')">usu\u0144</button></td>'
       + '</tr>'
     ).join('');
@@ -556,7 +556,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('r-min').value = r.min_downtime != null ? r.min_downtime : 5;
     document.getElementById('r-max').value = r.max_downtime != null ? r.max_downtime : 0;
     document.getElementById('r-send-info').checked = !!r.send_info;
-    document.getElementById('r-info').value = r.info || '';
+    document.getElementById('r-notes').value = r.notes || '';
     document.getElementById('rules-form-title').textContent = '\u270e Edycja regu\u0142y #' + id;
   }
 
@@ -566,7 +566,7 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('r-min').value = '';
     document.getElementById('r-max').value = '';
     document.getElementById('r-send-info').checked = false;
-    document.getElementById('r-info').value = '';
+    document.getElementById('r-notes').value = '';
     document.getElementById('rules-form-title').textContent = '+ Nowa regu\u0142a';
     document.querySelectorAll('#rules-tbody tr').forEach(r => r.classList.remove('selected'));
     setStatus('rules-status', '', '');
@@ -579,7 +579,7 @@ const HTML = `<!DOCTYPE html>
       min_downtime: parseInt(document.getElementById('r-min').value) || 0,
       max_downtime: parseInt(document.getElementById('r-max').value) || 0,
       send_info: document.getElementById('r-send-info').checked,
-      info: document.getElementById('r-info').value.trim(),
+      notes: document.getElementById('r-notes').value.trim(),
     };
     if (!body.service_pattern) return setStatus('rules-status', 'Service pattern wymagany', 'err');
     const url = id ? '/api/rules/' + id : '/api/rules';
@@ -605,17 +605,16 @@ const HTML = `<!DOCTYPE html>
   let logsInterval = null;
 
   function logsColorize(text) {
-    var lines = text.split("\\n");
+    var lines = text.split("\n");
     var result = [];
     for (var i = 0; i < lines.length; i++) {
       var l = lines[i];
       if (/error|err|fail|exception/i.test(l)) result.push('<span class="log-err">' + escHtml(l) + '</span>');
-      else if (/Sprawdzenie/i.test(l)) result.push('<span class="log-info">' + escHtml(l) + '</span>');
       else if (/warn|warning/i.test(l)) result.push('<span class="log-warn">' + escHtml(l) + '</span>');
       else if (/success|started|listening/i.test(l)) result.push('<span class="log-ok">' + escHtml(l) + '</span>');
       else result.push(escHtml(l));
     }
-    return result.join("\\n");
+    return result.join("\n");
   }
 
   function escHtml(s) {
@@ -636,10 +635,68 @@ const HTML = `<!DOCTYPE html>
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('log-auto').addEventListener('change', function() {
       if (this.checked) logsInterval = setInterval(logsLoad, 5000);
+    setInterval(watcherStatus, 5000);
+    watcherStatus();
       else { clearInterval(logsInterval); logsInterval = null; }
     });
     logsInterval = setInterval(logsLoad, 5000);
+    setInterval(watcherStatus, 5000);
+    watcherStatus();
   });
+
+  async function watcherStatus() {
+    try {
+      const res = await fetch("/api/watcher-status");
+      const data = await res.json();
+      const dot = document.getElementById("status-dot");
+      const label = document.getElementById("status-label");
+      if (data.status === "online") {
+        dot.style.background = "var(--success)";
+        label.style.color = "var(--success)";
+        label.textContent = "online";
+      } else if (data.status === "stopped") {
+        dot.style.background = "var(--muted)";
+        label.style.color = "var(--muted)";
+        label.textContent = "stopped";
+      } else if (data.status === "errored") {
+        dot.style.background = "var(--danger)";
+        label.style.color = "var(--danger)";
+        label.textContent = "errored";
+      } else {
+        dot.style.background = "var(--muted)";
+        label.style.color = "var(--muted)";
+        label.textContent = data.status || "unknown";
+      }
+    } catch {
+      document.getElementById("status-label").textContent = "brak połączenia";
+    }
+  }
+
+  async function watcherAction(action) {
+    const st = document.getElementById("watcher-action-status");
+    const labels = { start: "Uruchamiam...", restart: "Restartuję...", stop: "Zatrzymuję..." };
+    const done = { start: "Uruchomiono ✓", restart: "Zrestartowano ✓", stop: "Zatrzymano ✓" };
+    st.style.color = "var(--muted)";
+    st.textContent = labels[action];
+    ["btn-start","btn-restart","btn-stop"].forEach(id => document.getElementById(id).disabled = true);
+    try {
+      const res = await fetch("/api/watcher/" + action, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        st.style.color = "var(--success)";
+        st.textContent = done[action];
+        setTimeout(watcherStatus, 1500);
+      } else {
+        st.style.color = "var(--danger)";
+        st.textContent = data.error || "Błąd";
+      }
+    } catch {
+      st.style.color = "var(--danger)";
+      st.textContent = "Błąd połączenia";
+    }
+    ["btn-start","btn-restart","btn-stop"].forEach(id => document.getElementById(id).disabled = false);
+    setTimeout(() => { st.textContent = ""; }, 4000);
+  }
 
   function setStatus(elId, msg, type) {
     const el = document.getElementById(elId);
@@ -743,16 +800,16 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url === "/api/rules") {
-    const { service_pattern, min_downtime, max_downtime, send_info, info } =
+    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
       await parseBody(req);
     await pool.query(
-      "INSERT INTO alert_rules (service_pattern, min_downtime, max_downtime, send_info, info) VALUES ($1,$2,$3,$4,$5)",
+      "INSERT INTO alert_rules (service_pattern, min_downtime, max_downtime, send_info, notes) VALUES ($1,$2,$3,$4,$5)",
       [
         service_pattern,
         min_downtime || 0,
         max_downtime || 0,
         !!send_info,
-        info || "",
+        notes || "",
       ],
     );
     return send(res, 201, { ok: true });
@@ -760,16 +817,16 @@ const server = http.createServer(async (req, res) => {
 
   const rulesPut = url.match(/^\/api\/rules\/(\d+)$/);
   if (method === "PUT" && rulesPut) {
-    const { service_pattern, min_downtime, max_downtime, send_info, info } =
+    const { service_pattern, min_downtime, max_downtime, send_info, notes } =
       await parseBody(req);
     await pool.query(
-      "UPDATE alert_rules SET service_pattern=$1, min_downtime=$2, max_downtime=$3, send_info=$4, info=$5 WHERE id=$6",
+      "UPDATE alert_rules SET service_pattern=$1, min_downtime=$2, max_downtime=$3, send_info=$4, notes=$5 WHERE id=$6",
       [
         service_pattern,
         min_downtime || 0,
         max_downtime || 0,
         !!send_info,
-        info || "",
+        notes || "",
         rulesPut[1],
       ],
     );
@@ -789,12 +846,38 @@ const server = http.createServer(async (req, res) => {
     exec(
       `pm2 logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
       (err, stdout, stderr) => {
-        const output = ((stdout || "") + (stderr || ""))
-          .replace(/\x1B\[[0-9;]*m/g, "") // usuń kody ANSI
-          .replace(/^\d+\|[^|]*\|\s*/gm, ""); // usuń prefix PM2
+        const output = ((stdout || "") + (stderr || "")).replace(
+          /\x1B\[[0-9;]*m/g,
+          "",
+        );
         send(res, 200, { output });
       },
     );
+    return;
+  }
+
+  // ---- WATCHER CONTROL ----
+  if (method === "GET" && url === "/api/watcher-status") {
+    exec("pm2 jlist", (err, stdout) => {
+      if (err) return send(res, 500, { error: err.message });
+      try {
+        const list = JSON.parse(stdout);
+        const proc = list.find((p) => p.name === PM2_SERVICE);
+        send(res, 200, { status: proc ? proc.pm2_env.status : "not found" });
+      } catch {
+        send(res, 500, { error: "parse error" });
+      }
+    });
+    return;
+  }
+
+  const watcherAction = url.match(/^\/api\/watcher\/(start|stop|restart)$/);
+  if (method === "POST" && watcherAction) {
+    const action = watcherAction[1];
+    exec("pm2 " + action + " " + PM2_SERVICE, (err) => {
+      if (err) return send(res, 500, { error: err.message });
+      send(res, 200, { ok: true });
+    });
     return;
   }
 
