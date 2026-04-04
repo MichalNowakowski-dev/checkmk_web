@@ -723,11 +723,24 @@ const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
 
 const basicAuth = (req, res) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   const auth = req.headers["authorization"];
   if (auth && auth.startsWith("Basic ")) {
     const decoded = Buffer.from(auth.slice(6), "base64").toString();
     const [user, pass] = decoded.split(":");
-    if (user === ADMIN_USER && pass === ADMIN_PASS) return true;
+    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+      console.log(
+        `[${new Date().toISOString()}] AUTH OK - user: ${user} - IP: ${ip}`,
+      );
+      return true;
+    }
+    console.log(
+      `[${new Date().toISOString()}] AUTH FAIL - user: ${user} - IP: ${ip}`,
+    );
+  } else {
+    console.log(
+      `[${new Date().toISOString()}] AUTH FAIL - no credentials - IP: ${ip}`,
+    );
   }
   res.writeHead(401, {
     "WWW-Authenticate": 'Basic realm="CheckMK Manager"',
@@ -736,7 +749,6 @@ const basicAuth = (req, res) => {
   res.end("Unauthorized");
   return false;
 };
-
 const send = (res, status, data) => {
   const body = typeof data === "string" ? data : JSON.stringify(data);
   const ct =
