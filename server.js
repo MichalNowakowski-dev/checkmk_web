@@ -420,7 +420,7 @@ const HTML = `<!DOCTYPE html>
       <span id="watcher-action-status" style="font-size:0.75rem;min-width:80px"></span>
       <div class="log-auto">
         <input type="checkbox" id="log-auto" checked style="accent-color:var(--accent2)" />
-        <label for="log-auto" style="text-transform:none;letter-spacing:0">auto-odświeżaj co 5s</label>
+        <label for="log-auto" style="text-transform:none;letter-spacing:0">auto-odświeżaj co minutę</label>
       </div>
       <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.75rem" onclick="logsLoad()">Odśwież</button>
       <select id="log-lines" onchange="logsLoad()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:inherit;font-size:0.75rem;border-radius:2px;outline:none">
@@ -644,11 +644,11 @@ const HTML = `<!DOCTYPE html>
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('log-auto').addEventListener('change', function() {
-      if (this.checked) logsInterval = setInterval(logsLoad, 5000);
+      if (this.checked) logsInterval = setInterval(logsLoad, 60000);
       else { clearInterval(logsInterval); logsInterval = null; }
     });
-    logsInterval = setInterval(logsLoad, 5000);
-  setInterval(watcherStatus, 5000);
+    logsInterval = setInterval(logsLoad, 60000);
+  setInterval(watcherStatus, 60000);
     watcherStatus();
   });
 
