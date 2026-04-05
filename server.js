@@ -414,9 +414,9 @@ const HTML = `<!DOCTYPE html>
         <span id="status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block;transition:background 0.3s"></span>
         <span id="status-label" style="font-size:0.75rem;color:var(--muted)">...</span>
       </div>
-      <button class="btn" id="btn-start" style="padding:6px 14px;font-size:0.75rem;background:var(--success);color:#0a0a0f;border:none" onclick="watcherAction('start')">Start</button>
+      <button class="btn" id="btn-start" style="padding:6px 14px;font-size:0.75rem;background:var(--success);color:#0a0a0f;border:none" onclick="watcherAction('unpause')">Start</button>
       <button class="btn" id="btn-restart" style="padding:6px 14px;font-size:0.75rem;background:var(--accent);color:#0a0a0f;border:none" onclick="watcherAction('restart')">Restart</button>
-      <button class="btn" id="btn-stop" style="padding:6px 14px;font-size:0.75rem;background:var(--danger);color:#fff;border:none" onclick="watcherAction('stop')">Stop</button>
+      <button class="btn" id="btn-stop" style="padding:6px 14px;font-size:0.75rem;background:var(--danger);color:#fff;border:none" onclick="watcherAction('pause')">Stop</button>
       <span id="watcher-action-status" style="font-size:0.75rem;min-width:80px"></span>
       <div class="log-auto">
         <input type="checkbox" id="log-auto" checked style="accent-color:var(--accent2)" />
@@ -889,7 +889,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const watcherAction = url.match(/^\/api\/watcher\/(start|stop|restart)$/);
+  const watcherAction = url.match(/^\/api\/watcher\/(unpause|pause|restart)$/);
   if (method === "POST" && watcherAction) {
     const action = watcherAction[1];
     exec("docker " + action + " checkmk_watcher", (err) => {
