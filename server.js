@@ -409,7 +409,7 @@ const HTML = `<!DOCTYPE html>
 <div class="pane" id="pane-logs">
   <div class="log-wrap">
     <div class="log-toolbar">
-      <div class="form-title" style="color:var(--accent2)">Logi PM2</div>
+      <div class="form-title" style="color:var(--accent2)">Logi</div>
       <div id="watcher-status" style="display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:2px">
         <span id="status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block;transition:background 0.3s"></span>
         <span id="status-label" style="font-size:0.75rem;color:var(--muted)">...</span>
@@ -658,11 +658,11 @@ const HTML = `<!DOCTYPE html>
       const data = await res.json();
       const dot = document.getElementById("status-dot");
       const label = document.getElementById("status-label");
-      if (data.status === "online") {
+      if (data.status === "running") {
         dot.style.background = "var(--success)";
         label.style.color = "var(--success)";
         label.textContent = "online";
-      } else if (data.status === "stopped") {
+      } else if (data.status === "exited") {
         dot.style.background = "var(--muted)";
         label.style.color = "var(--muted)";
         label.textContent = "stopped";
@@ -865,11 +865,12 @@ const server = http.createServer(async (req, res) => {
     const params = new URL("http://x" + url).searchParams;
     const lines = parseInt(params.get("lines")) || 50;
     exec(
-      `docker logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
+      `docker logs -t --tail ${lines} checkmk_watcher 2>&1`,
       (err, stdout, stderr) => {
-        const output = ((stdout || "") + (stderr || ""))
-          .replace(/\x1B\[[0-9;]*m/g, "") // usuń kody ANSI
-          .replace(/^\d+\|[^|]*\|\s*/gm, ""); // usuń prefix PM2
+        const output = ((stdout || "") + (stderr || "")).replace(
+          /\x1B\[[0-9;]*m/g,
+          "",
+        ); // usuń kody ANSI
         send(res, 200, { output });
       },
     );
