@@ -865,7 +865,7 @@ const server = http.createServer(async (req, res) => {
     const params = new URL("http://x" + url).searchParams;
     const lines = parseInt(params.get("lines")) || 50;
     exec(
-      `pm2 logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
+      `docker logs ${PM2_SERVICE} --lines ${lines} --nostream 2>&1`,
       (err, stdout, stderr) => {
         const output = ((stdout || "") + (stderr || ""))
           .replace(/\x1B\[[0-9;]*m/g, "") // usuń kody ANSI
@@ -878,23 +878,20 @@ const server = http.createServer(async (req, res) => {
 
   // ---- WATCHER CONTROL ----
   if (method === "GET" && url === "/api/watcher-status") {
-    exec("pm2 jlist", (err, stdout) => {
-      if (err) return send(res, 500, { error: err.message });
-      try {
-        const list = JSON.parse(stdout);
-        const proc = list.find((p) => p.name === PM2_SERVICE);
-        send(res, 200, { status: proc ? proc.pm2_env.status : "not found" });
-      } catch {
-        send(res, 500, { error: "parse error" });
-      }
-    });
+    exec(
+      "docker inspect --format={{.State.Status}} checkmk_watcher",
+      (err, stdout) => {
+        if (err) return send(res, 500, { error: err.message });
+        send(res, 200, { status: stdout.trim() });
+      },
+    );
     return;
   }
 
   const watcherAction = url.match(/^\/api\/watcher\/(start|stop|restart)$/);
   if (method === "POST" && watcherAction) {
     const action = watcherAction[1];
-    exec("pm2 " + action + " " + PM2_SERVICE, (err) => {
+    exec("docker " + action + " checkmk_watcher", (err) => {
       if (err) return send(res, 500, { error: err.message });
       send(res, 200, { ok: true });
     });
