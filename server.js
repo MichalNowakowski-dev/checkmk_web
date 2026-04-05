@@ -865,7 +865,7 @@ const server = http.createServer(async (req, res) => {
     const params = new URL("http://x" + url).searchParams;
     const lines = parseInt(params.get("lines")) || 50;
     exec(
-      `docker logs -t --tail ${lines} checkmk_watcher 2>&1`,
+      `docker logs --tail ${lines} checkmk_watcher 2>&1`,
       (err, stdout, stderr) => {
         const output = ((stdout || "") + (stderr || "")).replace(
           /\x1B\[[0-9;]*m/g,
